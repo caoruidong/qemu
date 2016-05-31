@@ -4859,6 +4859,9 @@ static target_ulong disas_insn(CPUX86State *env, DisasContext *s,
             break;
         case 2: /* call Ev */
             /* XXX: optimize if memory (no 'and' is necessary) */
+                        
+			s->tb->type = TB_CALL;
+			
             if (dflag == MO_16) {
                 tcg_gen_ext16u_tl(cpu_T0, cpu_T0);
             }
@@ -4870,6 +4873,9 @@ static target_ulong disas_insn(CPUX86State *env, DisasContext *s,
             gen_eob(s);
             break;
         case 3: /* lcall Ev */
+                    
+			s->tb->type = TB_CALL;
+			
             gen_op_ld_v(s, ot, cpu_T1, cpu_A0);
             gen_add_A0_im(s, 1 << ot);
             gen_op_ld_v(s, MO_16, cpu_T0, cpu_A0);
@@ -6266,6 +6272,9 @@ static target_ulong disas_insn(CPUX86State *env, DisasContext *s,
         /************************/
         /* control */
     case 0xc2: /* ret im */
+            
+		s->tb->type = TB_RET;
+    
         val = cpu_ldsw_code(env, s->pc);
         s->pc += 2;
         ot = gen_pop_T0(s);
@@ -6276,6 +6285,9 @@ static target_ulong disas_insn(CPUX86State *env, DisasContext *s,
         gen_eob(s);
         break;
     case 0xc3: /* ret */
+            
+		s->tb->type = TB_RET;
+    
         ot = gen_pop_T0(s);
         gen_pop_update(s, ot);
         /* Note that gen_pop_T0 uses a zero-extending load.  */
@@ -6284,6 +6296,9 @@ static target_ulong disas_insn(CPUX86State *env, DisasContext *s,
         gen_eob(s);
         break;
     case 0xca: /* lret im */
+            
+		s->tb->type = TB_RET;
+    
         val = cpu_ldsw_code(env, s->pc);
         s->pc += 2;
     do_lret:
@@ -6309,6 +6324,9 @@ static target_ulong disas_insn(CPUX86State *env, DisasContext *s,
         gen_eob(s);
         break;
     case 0xcb: /* lret */
+            
+		s->tb->type = TB_RET;
+    
         val = 0;
         goto do_lret;
     case 0xcf: /* iret */
@@ -6332,7 +6350,10 @@ static target_ulong disas_insn(CPUX86State *env, DisasContext *s,
         gen_eob(s);
         break;
     case 0xe8: /* call im */
-        {
+        {  
+                      
+			s->tb->type = TB_CALL;
+			
             if (dflag != MO_16) {
                 tval = (int32_t)insn_get(env, s, MO_32);
             } else {
@@ -6354,7 +6375,9 @@ static target_ulong disas_insn(CPUX86State *env, DisasContext *s,
     case 0x9a: /* lcall im */
         {
             unsigned int selector, offset;
-
+                        
+			s->tb->type = TB_CALL;
+			
             if (CODE64(s))
                 goto illegal_op;
             ot = dflag;

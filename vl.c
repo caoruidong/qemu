@@ -125,6 +125,16 @@ int main(int argc, char **argv)
 #define MAX_VIRTIO_CONSOLES 1
 #define MAX_SCLP_CONSOLES 1
 
+typedef uint64_t target_ulong;
+#define TARGET_lx "%"PRIx64
+//~ typedef uint32_t target_ulong;
+//~ #define TARGET_lx "%08x"
+#define FUNC_MAX 30000
+#define PRAM_MAX 6
+target_ulong kernel_start,kernel_end,funcaddr[FUNC_MAX];
+int funccount=0;
+char funcargv[FUNC_MAX][PRAM_MAX],target[16];
+
 static const char *data_dir[16];
 static int data_dir_idx;
 const char *bios_name = NULL;
@@ -4073,6 +4083,16 @@ int main(int argc, char **argv, char **envp)
         qemu_set_log(mask);
     } else {
         qemu_set_log(0);
+        
+        if (qemu_loglevel_mask(CPU_LOG_TB_NOCHAIN)) {    
+            FILE *fp = fopen("configs.txt", "r");
+            if(fscanf(fp,TARGET_lx TARGET_lx" %s",&kernel_start,&kernel_end,target)){
+                while(fscanf(fp,TARGET_lx" %s",&funcaddr[funccount],funcargv[funccount])!=-1)
+                    funccount++;
+            }
+            fclose(fp);
+		}
+        
     }
 
     /* If no data_dir is specified then try to find it relative to the

@@ -133,6 +133,26 @@ static void init_delay_params(SyncClocks *sc, const CPUState *cpu)
 }
 #endif /* CONFIG USER ONLY */
 
+extern target_ulong kernel_start,kernel_end,funcaddr[];
+extern char funcargv[][6],target[];
+extern int funccount;
+const int argorder[6]={R_EDI,R_ESI,R_EDX,R_ECX,8,9};
+
+static int funcistraced(target_ulong target)
+{
+    int low=0,high=funccount-1,mid;
+    while(low<=high){
+        mid=(low+high)>>1;
+        if(funcaddr[mid]>target)
+            high=mid-1;
+        else if(funcaddr[mid]<target)
+            low=mid+1;
+        else
+            return mid;
+    }
+    return -1;
+}
+
 /* Execute a TB, and fix up the CPU state afterwards if necessary */
 static inline tcg_target_ulong cpu_tb_exec(CPUState *cpu, TranslationBlock *itb)
 {
@@ -187,6 +207,29 @@ static inline tcg_target_ulong cpu_tb_exec(CPUState *cpu, TranslationBlock *itb)
             cc->set_pc(cpu, last_tb->pc);
         }
     }
+    else if(qemu_loglevel_mask(CPU_LOG_TB_NOCHAIN)){                        
+        if(funcistraced(env->eip)!=-1){
+            if(itb->type==TB_CALL){
+                target_ulong esp=env->regs[R_ESP],tid=esp&0xffffffffffffc000,current;
+                char processname[16];
+                cpu_memory_rw_debug(cpu,tid,(uint8_t *)&current,sizeof(current),0);
+                cpu_memory_rw_debug(cpu,current+0x5e0,(uint8_t *)&processname,sizeof(processname),0);
+                //~ if(strstr(processname,target)){
+                    target_ulong ebp=env->regs[R_EBP],eip=env->eip;                         
+                    int i;
+                    qemu_log("calling eip:"TARGET_FMT_lx",exit :%d\n", eip,next_tb & TB_EXIT_MASK);
+                    eip=tb->pc+tb->size;
+                    for(i=0;ebp!=0&&i<20;i++){
+                        qemu_log("ebp:0x"TARGET_FMT_lx" eip:0x"TARGET_FMT_lx"\n", ebp, eip);
+                        cpu_memory_rw_debug(cpu,ebp+sizeof(target_ulong),(uint8_t *)&eip,sizeof(eip),0);
+                        cpu_memory_rw_debug(cpu,ebp,(uint8_t *)&ebp,sizeof(ebp),0);
+                    }
+                    qemu_log("\n");
+                //~ }
+            }
+        }                 
+    }
+    
     if (tb_exit == TB_EXIT_REQUESTED) {
         /* We were asked to stop executing TBs (probably a pending
          * interrupt. We've now stopped, so clear the flag.

@@ -199,6 +199,11 @@ static inline void tlb_flush_by_mmuidx(CPUState *cpu, ...)
 #define USE_DIRECT_JUMP
 #endif
 
+#define TB_DEFAULT   0
+ #define TB_CALL          1
+ #define TB_RET             2
+ #define TB_UNCCALL 3
+
 struct TranslationBlock {
     target_ulong pc;   /* simulated PC corresponding to this block (EIP + CS base) */
     target_ulong cs_base; /* CS base for this block */
@@ -252,6 +257,8 @@ struct TranslationBlock {
      */
     uintptr_t jmp_list_next[2];
     uintptr_t jmp_list_first;
+    
+    uint8_t type;
 };
 
 void tb_free(TranslationBlock *tb);

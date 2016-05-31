@@ -4344,7 +4344,9 @@ static target_ulong disas_insn(CPUX86State *env, DisasContext *s,
     int modrm, reg, rm, mod, op, opreg, val;
     target_ulong next_eip, tval;
     int rex_w, rex_r;
-
+    
+     s->tb->type=TB_DEFAULT;
+    
     s->pc_start = s->pc = pc_start;
     prefixes = 0;
     s->override = -1;

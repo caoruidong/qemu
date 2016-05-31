@@ -217,8 +217,8 @@ static inline tcg_target_ulong cpu_tb_exec(CPUState *cpu, TranslationBlock *itb)
                 //~ if(strstr(processname,target)){
                     target_ulong ebp=env->regs[R_EBP],eip=env->eip;                         
                     int i;
-                    qemu_log("calling eip:"TARGET_FMT_lx",exit :%d\n", eip,next_tb & TB_EXIT_MASK);
-                    eip=tb->pc+tb->size;
+                    qemu_log("calling eip:"TARGET_FMT_lx"\n", eip);
+                    eip=itb->pc+itb->size;
                     for(i=0;ebp!=0&&i<20;i++){
                         qemu_log("ebp:0x"TARGET_FMT_lx" eip:0x"TARGET_FMT_lx"\n", ebp, eip);
                         cpu_memory_rw_debug(cpu,ebp+sizeof(target_ulong),(uint8_t *)&eip,sizeof(eip),0);

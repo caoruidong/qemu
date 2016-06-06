@@ -4081,8 +4081,6 @@ int main(int argc, char **argv, char **envp)
             exit(1);
         }
         qemu_set_log(mask);
-    } else {
-        qemu_set_log(0);
         
         if (qemu_loglevel_mask(CPU_LOG_TB_NOCHAIN)) {    
             FILE *fp = fopen("configs.txt", "r");
@@ -4091,8 +4089,10 @@ int main(int argc, char **argv, char **envp)
                     funccount++;
             }
             fclose(fp);
-		}
+	}
         
+    } else {
+        qemu_set_log(0);
     }
 
     /* If no data_dir is specified then try to find it relative to the
